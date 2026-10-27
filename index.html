@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ЦАГДААГИЙН ЕРӨНХИЙ ГАЗАР - ХАР ТАМХИТАЙ ТЭМЦЭХ АЛБА</title>
+    <style>
+        * { 
+            box-sizing: border-box; 
+            margin: 0; 
+            padding: 0; 
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: #030712;
+            color: #f3f4f6;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            padding: 12px;
+            max-width: 450px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: #090d16;
+            border: 1px solid #1f2937;
+            border-left: 4px solid #ef4444;
+            padding: 10px 12px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 6px;
+        }
+
+        .header-logo {
+            width: 44px;
+            height: 44px;
+            object-fit: cover;
+            border-radius: 50%;
+            background: #030712;
+            border: 1px solid #1f2937;
+            flex-shrink: 0;
+            filter: drop-shadow(0 0 5px rgba(239, 68, 68, 0.4));
+        }
+
+        .header-text {
+            text-align: center;
+            flex-grow: 1;
+        }
+
+        .header-text h1 { 
+            font-size: 11px; 
+            color: #ef4444; 
+            letter-spacing: 0.5px; 
+            font-weight: bold; 
+            line-height: 1.3;
+        }
+
+        .header-text p { 
+            font-size: 9px; 
+            color: #38bdf8; 
+            margin-top: 3px; 
+            font-weight: 700; 
+            letter-spacing: 0.5px; 
+        }
+
+        /* Дүүргүүд */
+        .radar-wrapper {
+            background: radial-gradient(circle, #0f172a 0%, #030712 100%);
+            border-radius: 12px;
+            border: 1px solid #1e293b;
+            padding: 10px;
+            margin-bottom: 12px;
+        }
+
+        .district-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 8px;
+        }
+
+        .district-card {
+            background: rgba(15, 23, 42, 0.9);
+            border-radius: 8px;
+            padding: 8px 6px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: 80px;
+            border: 1px solid;
+            cursor: pointer;
+        }
+        .district-card:active { transform: scale(0.95); }
+
+        .district-card.red { border-color: #ef4444; }
+        .district-card.yellow { border-color: #f59e0b; }
+        .district-card.green { border-color: #10b981; }
+
+        .code { font-size: 10px; font-weight: bold; }
+        .red .code { color: #ef4444; }
+        .yellow .code { color: #f59e0b; }
+        .green .code { color: #10b981; }
+
+        .name { font-size: 10px; font-weight: bold; color: #fff; }
+        .status { font-size: 8px; color: #9ca3af; }
+
+        /* Панел */
+        .panel {
+            background: #090d16;
+            border: 1px solid #1f2937;
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 12px;
+        }
+
+        .panel-title {
+            font-size: 11px;
+            font-weight: bold;
+            color: #38bdf8;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .bar-bg {
+            background: #1e293b;
+            height: 8px;
+            border-radius: 4px;
+            overflow: hidden;
+            display: flex;
+            margin-top: 4px;
+        }
+
+        .bar-male { background: #38bdf8; height: 100%; }
+        .bar-female { background: #f43f5e; height: 100%; }
+        .bar-age { background: #f59e0b; height: 100%; }
+
+        /* Хурууны хээ сканер */
+        .fp-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 15px;
+            background: #030712;
+            border: 2px solid #1e293b;
+            border-radius: 12px;
+            position: relative;
+            cursor: pointer;
+            overflow: hidden;
+            touch-action: none;
+        }
+
+        .fp-svg {
+            width: 70px;
+            height: 70px;
+            fill: none;
+            stroke: #475569;
+            stroke-width: 2;
+            stroke-linecap: round;
+            transition: all 0.3s ease;
+            pointer-events: none;
+        }
+
+        .laser-line {
+            position: absolute;
+            left: 10%;
+            right: 10%;
+            height: 3px;
+            background: #ef4444;
+            box-shadow: 0 0 12px #ef4444;
+            display: none;
+            top: 20%;
+            pointer-events: none;
+        }
+
+        .fp-container.scanning {
+            border-color: #ef4444;
+            box-shadow: 0 0 15px rgba(239, 68, 68, 0.3);
+        }
+        .fp-container.scanning .fp-svg {
+            stroke: #ef4444;
+            filter: drop-shadow(0 0 6px #ef4444);
+        }
+        .fp-container.scanning .laser-line {
+            display: block;
+            animation: scanMove 1.2s infinite ease-in-out;
+        }
+
+        .fp-container.success {
+            border-color: #10b981;
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.4);
+        }
+        .fp-container.success .fp-svg {
+            stroke: #10b981;
+            filter: drop-shadow(0 0 8px #10b981);
+        }
+
+        .fp-container.danger {
+            border-color: #ef4444;
+            box-shadow: 0 0 18px rgba(239, 68, 68, 0.5);
+        }
+        .fp-container.danger .fp-svg {
+            stroke: #ef4444;
+            filter: drop-shadow(0 0 10px #ef4444);
+        }
+
+        .scan-text {
+            font-size: 10px;
+            font-weight: bold;
+            color: #9ca3af;
+            margin-top: 10px;
+            text-align: center;
+            pointer-events: none;
+        }
+
+        .result-box {
+            display: none;
+            margin-top: 10px;
+            background: #030712;
+            border: 1px solid #ef4444;
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 10px;
+            line-height: 1.5;
+            animation: fadeIn 0.3s ease;
+        }
+
+        /* ИП / Байршил тогтоогч хэсэг (Geo-Tracker) */
+        .geo-input {
+            width: 100%;
+            background: #030712;
+            border: 1px solid #1f2937;
+            color: #fff;
+            padding: 8px 10px;
+            font-size: 11px;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            outline: none;
+            font-family: inherit;
+        }
+        .geo-input:focus { border-color: #38bdf8; }
+
+        .geo-btn {
+            width: 100%;
+            background: #1e293b;
+            border: 1px solid #38bdf8;
+            color: #38bdf8;
+            padding: 8px;
+            font-size: 11px;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .geo-btn:active { background: #38bdf8; color: #030712; }
+
+        .geo-result {
+            display: none;
+            margin-top: 10px;
+            background: #030712;
+            border: 1px solid #38bdf8;
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 10px;
+            line-height: 1.5;
+            color: #e2e8f0;
+        }
+
+        @keyframes scanMove {
+            0% { top: 20%; }
+            50% { top: 75%; }
+            100% { top: 20%; }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+    </style>
+</head>
+<body oncontextmenu="return false;">
+
+    <!-- Гарчиг болон Логонууд -->
+    <div class="header">
+        <img class="header-logo" src="https://i.ibb.co/MD1yTR6f/IMG-0344.jpg" alt="Хар тамхитай тэмцэх алба" onerror="this.src='https://i.ibb.co/3sS7nCq/police-logo.png'">
+        
+        <div class="header-text">
+            <h1>ЦАГДААГИЙН ЕРӨНХИЙ ГАЗАР</h1>
+            <p>ХАР ТАМХИТАЙ ТЭМЦЭХ АЛБА</p>
+        </div>
+
+        <img class="header-logo" src="https://i.ibb.co/RZqCSGY/IMG-0345.jpg" alt="Эрүүгийн цагдаагийн алба" onerror="this.src='https://i.ibb.co/3sS7nCq/police-logo.png'">
+    </div>
+
+    <!-- Дүүргүүд -->
+    <div class="radar-wrapper">
+        <div class="district-grid">
+            <div class="district-card red" onclick="showStats('СҮХБААТАР', '88%', '91.5%', '8.5%', '93.2%')">
+                <div class="code">SBD</div>
+                <div class="name">СҮХБААТ...</div>
+                <div class="status">ӨНӨР (88%)</div>
+            </div>
+            <div class="district-card yellow" onclick="showStats('ХАН-УУЛ', '54%', '89.2%', '10.8%', '90.5%')">
+                <div class="code">HUD</div>
+                <div class="name">ХАН-УУЛ ...</div>
+                <div class="status">ДУНД (54%)</div>
+            </div>
+            <div class="district-card red" onclick="showStats('БАЯНГОЛ', '79%', '92.1%', '7.9%', '94.1%')">
+                <div class="code">BGD</div>
+                <div class="name">БАЯНГОЛ ...</div>
+                <div class="status">ӨНӨР (79%)</div>
+            </div>
+            <div class="district-card red" onclick="showStats('БАЯНЗҮРХ', '82%', '91.8%', '8.2%', '92.8%')">
+                <div class="code">BZD</div>
+                <div class="name">БАЯНЗҮР...</div>
+                <div class="status">ӨНӨР (82%)</div>
+            </div>
+            <div class="district-card yellow" onclick="showStats('СОНГИНОХАЙРХАН', '61%', '90.8%', '9.2%', '91.0%')">
+                <div class="code">SHD</div>
+                <div class="name">СОНГИНН...</div>
+                <div class="status">ДУНД (61%)</div>
+            </div>
+            <div class="district-card green" onclick="showStats('ЧИНГЭЛТЭЙ', '35%', '88.5%', '11.5%', '89.4%')">
+                <div class="code">CHD</div>
+                <div class="name">ЧИНГЭЛТ...</div>
+                <div class="status">ХҮНД (35%)</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Дүүргийн Статистик -->
+    <div class="panel" id="statPanel" style="display:none;">
+        <div class="panel-title">
+            <span id="dName">ДҮҮРЭГ</span>
+            <span id="dRisk" style="color:#ef4444;">0%</span>
+        </div>
+        <div style="font-size: 9px; color: #9ca3af; margin-bottom: 4px;">
+            👨 Эрэгтэй: <b id="mVal" style="color:#38bdf8;">0%</b> | 👩 Эмэгтэй: <b id="fVal" style="color:#f43f5e;">0%</b>
+        </div>
+        <div class="bar-bg">
+            <div class="bar-male" id="mBar" style="width: 50%;"></div>
+            <div class="bar-female" id="fBar" style="width: 50%;"></div>
+        </div>
+        <div style="font-size: 9px; color: #9ca3af; margin-top: 8px;">
+            Залуучууд (<35 нас): <b id="ageVal" style="color:#f59e0b;">0%</b>
+        </div>
+        <div class="bar-bg">
+            <div class="bar-age" id="ageBar" style="width: 50%;"></div>
+        </div>
+    </div>
+
+    <!-- IP / Төхөөрөмж ба Байршил Байршуулагч (Geo-Tracker) -->
+    <div class="panel">
+        <div class="panel-title">📡 КИБЕР РАДАР (IP & GEO TRACKER)</div>
+        <input type="text" id="targetInput" class="geo-input" placeholder="Сэжигтний утас эсвэл IP (Жишээ: 9911****, 202.131...)">
+        <button class="geo-btn" onclick="runGeoTracker()">БАЙРШИЛ САКАНЕРДАХ</button>
+        
+        <div class="geo-result" id="geoResult">
+            <div style="color: #38bdf8; font-weight: bold; margin-bottom: 4px;" id="geoTitle">📍 БАЙРШИЛ ТОГТООГДЛОО</div>
+            <div id="geoDetail"></div>
+        </div>
+    </div>
+
+    <!-- Хурууны Хээний Шинжилгээний Сканер -->
+    <div class="panel">
+        <div class="panel-title">🧪 БИОЛОГИЙН ЭКСПРЕСС САКАНЕР</div>
+        
+        <div class="fp-container" id="fpBox" 
+             onmousedown="startScan(event)" onmouseup="stopScan(event)" 
+             ontouchstart="startScan(event)" ontouchend="stopScan(event)">
+            <div class="laser-line"></div>
+            <svg class="fp-svg" viewBox="0 0 24 24">
+                <path d="M12 2C8.13 2 5 5.13 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.87-3.13-7-7-7zm0 2c2.76 0 5 2.24 5 5 0 1.83-1 3.42-2.5 4.26l-.5.28V16h-4v-2.46l-.5-.28C8 12.42 7 10.83 7 9c0-2.76 2.24-5 5-5z"/>
+                <path d="M12 7c-1.1 0-2 .9-2 2v2h4V9c0-1.1-.9-2-2-2z"/>
+            </svg>
+            <div class="scan-text" id="scanText">ХУРУУГААР УДААН ДАРАХ (PRESS & HOLD)</div>
+        </div>
+
+        <div class="result-box" id="resultBox">
+            <div style="font-weight: bold; margin-bottom: 4px;" id="resTitle"></div>
+            <div id="resDetail" style="color: #cbd5e1;"></div>
+        </div>
+    </div>
+
+    <script>
+        function showStats(name, risk, male, female, age) {
+            document.getElementById('statPanel').style.display = 'block';
+            document.getElementById('dName').innerText = name + " ДҮҮРЭГ";
+            document.getElementById('dRisk').innerText = "Эрсдэл: " + risk;
+            document.getElementById('mVal').innerText = male;
+            document.getElementById('fVal').innerText = female;
+            document.getElementById('ageVal').innerText = age;
+            document.getElementById('mBar').style.width = male;
+            document.getElementById('fBar').style.width = female;
+            document.getElementById('ageBar').style.width = age;
+        }
+
+        // Кибер байршил тогтоогч симуляци
+        const ubLocations = [
+            { dist: "Баянгол дүүрэг", area: "3-р хороолол,минжийн хотхон", net: "Ondo (eSIM)", coord: "47.9182° N, 106.8770° E" },
+            { dist: "Сүхбаатар дүүрэг", area: "1-р хороо, УИД орчим", net: "Mobicom LTE", coord: "47.9212° N, 106.9184° E" },
+            { dist: "Хан-Уул дүүрэг", area: "15-р хороо, Зайсан", net: "Skytel 4G", coord: "47.8863° N, 106.9105° E" },
+            { dist: "Баянзүрх дүүрэг", area: "13-р хороолол, Наשור", net: "Unitel 5G", coord: "47.9175° N, 106.9452° E" },
+            { dist: "Сонгинохайрхан дүүрэг", area: "Сүлх, Саппоро орчим", net: "G-Mobile", coord: "47.9130° N, 106.8320° E" }
+        ];
+
+        function runGeoTracker() {
+            const inputVal = document.getElementById('targetInput').value.trim();
+            const resultBox = document.getElementById('geoResult');
+            const detailBox = document.getElementById('geoDetail');
+
+            if(!inputVal) {
+                alert("Сэжигтний утасны дугаар эсвэл IP хаяг оруулна уу!");
+                return;
+            }
+
+            resultBox.style.display = "block";
+            detailBox.innerHTML = "⏳ Сүлжээний оператор болон GPS станцаар байршил тогтоож байна...";
+
+            setTimeout(() => {
+                const randLoc = ubLocations[Math.floor(Math.random() * ubLocations.length)];
+                detailBox.innerHTML = `
+                    • <b>Хайсан зорилт:</b> ${inputVal}<br>
+                    • <b>Байршил:</b> Улаанбаатар хот, ${randLoc.dist}, ${randLoc.area}<br>
+                    • <b>Сүлжээ:</b> ${randLoc.net}<br>
+                    • <b>Координат:</b> ${randLoc.coord}<br>
+                    • <b>Төлөв:</b> <span style="color:#10b981;">🔴 Идэвхтэй холболттой</span>
+                `;
+            }, 1500);
+        }
+
+        let scanTimer = null;
+        const substances = [
+            { name: "THC / КАННАБИС", type: "Олс өвсний гаралтай бодис", art: "Эрүүгийн хуулийн 20.7.1", pos: true },
+            { name: "METHAMPHETAMINE / МӨС", type: "Нийлэг синтетик бодис", art: "Эрүүгийн хуулийн 20.7.2", pos: true },
+            { name: "ЦЭВЭР (БОДИС ИЛРЭЭГҮЙ)", type: "Шинжилгээ сөрөг гарсан", art: "Хариуцлага хүлээлгэхгүй", pos: false }
+        ];
+
+        function startScan(e) {
+            if (e && e.preventDefault) e.preventDefault();
+            
+            const fpBox = document.getElementById('fpBox');
+            const scanText = document.getElementById('scanText');
+            const resultBox = document.getElementById('resultBox');
+
+            fpBox.className = "fp-container scanning";
+            scanText.innerText = "УЛААН ЛАЗЕРААР УРИНЫ ДЭЭЖИЙГ ШАЛГАЖ БАЙНА...";
+            scanText.style.color = "#ef4444";
+            resultBox.style.display = "none";
+
+            scanTimer = setTimeout(() => {
+                finishScan();
+            }, 1800);
+        }
+
+        function stopScan(e) {
+            if (e && e.preventDefault) e.preventDefault();
+            
+            if (scanTimer) {
+                clearTimeout(scanTimer);
+                scanTimer = null;
+                const fpBox = document.getElementById('fpBox');
+                if (fpBox.classList.contains("scanning")) {
+                    fpBox.className = "fp-container";
+                    document.getElementById('scanText').innerText = "ХУРУУГАА ЭРТ АВЛАА! УДААН ДАРНА УУ";
+                    document.getElementById('scanText').style.color = "#f59e0b";
+                }
+            }
+        }
+
+        function finishScan() {
+            const fpBox = document.getElementById('fpBox');
+            const scanText = document.getElementById('scanText');
+            const resultBox = document.getElementById('resultBox');
+            const rand = substances[Math.floor(Math.random() * substances.length)];
+
+            resultBox.style.display = "block";
+
+            if (rand.pos) {
+                fpBox.className = "fp-container danger";
+                scanText.innerText = "🔴 БОДИС ИЛЭРСЭН!";
+                scanText.style.color = "#ef4444";
+
+                resultBox.style.borderColor = "#ef4444";
+                document.getElementById('resTitle').innerText = "🔴 " + rand.name;
+                document.getElementById('resTitle').style.color = "#ef4444";
+            } else {
+                fpBox.className = "fp-container success";
+                scanText.innerText = "🟢 ШИНЖИЛГЭЭ ЦЭВЭР! (НОГООН ГЭРЭЛ)";
+                scanText.style.color = "#10b981";
+
+                resultBox.style.borderColor = "#10b981";
+                document.getElementById('resTitle').innerText = "🟢 " + rand.name;
+                document.getElementById('resTitle').style.color = "#10b981";
+            }
+
+            document.getElementById('resDetail').innerHTML = `
+                • <b>Төрөл:</b> ${rand.type}<br>
+                • <b>Хуулийн зүйлчлэл:</b> ${rand.art}
+            `;
+        }
+    </script>
+</body>
+</html>
